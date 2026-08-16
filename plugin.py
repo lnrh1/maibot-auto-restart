@@ -271,14 +271,14 @@ class MaiBotAutoRestart(MaiBotPlugin):
             self.ctx.logger.error(f"[lnrh-maibot_auto_restart] 调用 WebUI 重启 API 失败：{e}")
             self.ctx.logger.warning(f"[lnrh-maibot_auto_restart] 重启失败，请手动重启或通过 WebUI 重启")
     
-    @Command("restart", pattern=r"^/restart", description="手动触发重启")
+    @Command("restart", pattern=r"^/restart\s*$", description="手动触发重启")
     async def cmd_restart(self, **kwargs):
         """手动重启命令"""
         stream_id = kwargs.get("stream_id")
         await self._trigger_restart("手动命令触发", stream_id)
         return True, "重启指令已发送"
     
-    @Command("restart_status", pattern=r"^/restart_status", description="查看重启配置状态")
+    @Command("restart_status", pattern=r"^/restart_status\s*$", description="查看重启配置状态")
     async def cmd_restart_status(self, **kwargs):
         """查看重启配置状态"""
         stream_id = kwargs.get("stream_id")
