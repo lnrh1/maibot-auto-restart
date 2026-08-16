@@ -96,9 +96,9 @@ class AdvancedConfig(PluginConfigBase):
         }
     )
 
-    webui_token: str = Field(
-    default="",
-    description="WebUI访问令牌"
+    access_token: str = Field(
+        default="",
+        description="WebUI访问令牌"
     )
 
 
@@ -218,10 +218,10 @@ class MaiBotAutoRestart(MaiBotPlugin):
         self.restart_tasks.append(task)
     
     async def _get_webui_token(self) -> str:
-        token = self.config.advanced.webui_token
+        token = self.config.advanced.access_token
         if not token:
             raise RuntimeError(
-                "未配置 WebUI token，请在插件高级设置中填写 webui_token。"
+                "未配置 Access Token，请在插件高级设置中填写 access_token。"
             )
         return token
     
