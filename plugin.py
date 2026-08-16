@@ -96,6 +96,11 @@ class AdvancedConfig(PluginConfigBase):
         }
     )
 
+    webui_token: str = Field(
+    default="",
+    description="WebUI访问令牌"
+    )
+
 
 class MaiBotAutoRestartConfig(PluginConfigBase):
     
@@ -213,25 +218,12 @@ class MaiBotAutoRestart(MaiBotPlugin):
         self.restart_tasks.append(task)
     
     async def _get_webui_token(self) -> str:
-        """读取 WebUI 访问 token"""
-        import json
-        from pathlib import Path
-
-        plugin_data_dir = self.ctx.paths.data_dir
-        
-        global_data_dir = plugin_data_dir.parent.parent
-        
-        token_path = global_data_dir / "webui.json"
-        
-        try:
-            with open(token_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                token = data.get("access_token", "")
-                self.ctx.logger.debug(f"[lnrh1.maibot_auto_restart] 成功读取 WebUI token")
-                return token
-        except Exception as e:
-            self.ctx.logger.error(f"[lnrh1.maibot_auto_restart] 读取 WebUI token 失败：{e}")
-            raise RuntimeError(f"无法读取 WebUI token: {e}")
+        token = self.config.advanced.webui_token
+        if not token:
+            raise RuntimeError(
+                "未配置 WebUI token，请在插件高级设置中填写 webui_token。"
+            )
+        return token
     
     async def _trigger_restart(self, reason: str = "手动重启", stream_id: str = None) -> None:
 
