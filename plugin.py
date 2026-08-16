@@ -219,12 +219,15 @@ class MaiBotAutoRestart(MaiBotPlugin):
         import json
         from pathlib import Path
         
-        # 获取 MaiBot 根目录（从插件路径向上查找）
-        plugin_dir = Path(__file__).parent
-
-        maibot_root = plugin_dir.parent.parent
+        # 使用 SDK 提供的路径获取全局 data 目录
+        # self.ctx.paths.data_dir 指向 data/plugins/<plugin_id>/，由 Host 保证映射规则
+        plugin_data_dir = self.ctx.paths.data_dir
         
-        token_path = maibot_root / "data" / "webui.json"
+        # 推导全局 data 目录：data/plugins/<plugin_id>/ -> data/
+        # 这是基于 SDK 官方承诺的路径映射规则，比从 __file__ 推导更稳定
+        global_data_dir = plugin_data_dir.parent.parent
+        
+        token_path = global_data_dir / "webui.json"
         
         try:
             with open(token_path, "r", encoding="utf-8") as f:
