@@ -70,9 +70,12 @@
 
 查看插件状态
 
+## 获取Access Token
+该插件将会访问MaiBot/data/webui.json获取Access Token用于构造请求。请放心，该请求只会发往本地WebUI，无泄露风险。
+
 ## 重启原理
 
-触发重启时，插件将获取Access Token用于构造请求。由于该请求只发往本地127.0.0.1，这通常是安全的。随后发送该请求至WebUI，MaiBot将自动重启。
+触发重启时，插件将获取Access Token用于构造请求,随后发送该请求至本地WebUI，MaiBot将自动重启。
 
     获取Access Token -> 构造并发送重启请求 -> MaiBot自动完成重启
 
