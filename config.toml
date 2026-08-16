@@ -1,0 +1,24 @@
+[plugin]
+config_version = "1.0"
+
+[threshold]
+# 是否启用阈值监测
+enable_threshold_monitor = true
+# 内存阈值百分比
+memory_threshold_percent = 80
+# CPU阈值百分比
+cpu_threshold_percent = 90
+
+[schedule]
+# 是否启用定时重启
+enable_schedule_restart = false
+# 定时重启时间 (24 小时制，格式：HH:MM)
+restart_time = "04:00"
+
+[advanced]
+# 重启前延迟秒数
+restart_delay_seconds = 5
+# 手动重启前是否发送通知
+notify_before_manual_restart = true
+# WebUI端口
+webui_port = 8001
