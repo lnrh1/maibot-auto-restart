@@ -217,7 +217,7 @@ class MaiBotAutoRestart(MaiBotPlugin):
         task = asyncio.create_task(monitor_loop())
         self.restart_tasks.append(task)
     
-    async def _get_webui_token(self) -> str:
+    async def _get_access_token(self) -> str:
         token = self.config.advanced.access_token
         if not token:
             raise RuntimeError(
@@ -246,7 +246,7 @@ class MaiBotAutoRestart(MaiBotPlugin):
         
         try:
             # 读取 WebUI token
-            token = await self._get_webui_token()
+            token = await self._get_access_token()
             
             async with aiohttp.ClientSession() as session:
                 url = f"http://127.0.0.1:{port}/api/webui/system/restart"
