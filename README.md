@@ -72,7 +72,7 @@
 
 ## 重启原理
 
-触发重启后，插件会获取用户的Access Token用于构造请求，这通常是安全的（因为插件不会向外部发送含有Access Token的信息且插件与MaiBot位于同一设备上，请求会到达本地WebUI）。随后向WebUI发送请求，MaiBot将自动完成重启。
+触发重启时，插件将获取Access Token用于构造请求。由于该请求只发往本地127.0.0.1，这通常是安全的。随后发送该请求至WebUI，MaiBot将自动重启。
 
     获取Access Token -> 构造并发送重启请求 -> MaiBot自动完成重启
 
