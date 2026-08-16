@@ -29,11 +29,7 @@
         }
     ],
     "capabilities": [
-        "send.text",
-        "logger.info",
-        "logger.warning",
-        "logger.error",
-        "logger.debug"
+        "send.text"
     ],
     "i18n": {
         "default_locale": "zh_CN"
