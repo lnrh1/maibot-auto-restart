@@ -218,13 +218,9 @@ class MaiBotAutoRestart(MaiBotPlugin):
         """读取 WebUI 访问 token"""
         import json
         from pathlib import Path
-        
-        # 使用 SDK 提供的路径获取全局 data 目录
-        # self.ctx.paths.data_dir 指向 data/plugins/<plugin_id>/，由 Host 保证映射规则
+
         plugin_data_dir = self.ctx.paths.data_dir
         
-        # 推导全局 data 目录：data/plugins/<plugin_id>/ -> data/
-        # 这是基于 SDK 官方承诺的路径映射规则，比从 __file__ 推导更稳定
         global_data_dir = plugin_data_dir.parent.parent
         
         token_path = global_data_dir / "webui.json"
