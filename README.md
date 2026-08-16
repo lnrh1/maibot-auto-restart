@@ -85,7 +85,9 @@ webui_port = 8001
 触发重启后，插件会获取用户的Access Token用于构造请求，这通常是安全的（因为插件不会向外部发送含有Access Token的信息且插件与MaiBot位于同一设备上，请求会到达本地WebUI）。随后向WebUI发送请求，MaiBot将自动完成重启。
 
 ```mermaid
-获取Access Token -> 构造并发送重启请求 -> MaiBot自动完成重启
+flowchart LR
+    A[获取 Access Token] --> B[构造并发送重启请求]
+    B --> C[MaiBot 自动完成重启]
 ```
 
 ## 注意事项
