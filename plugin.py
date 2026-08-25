@@ -75,7 +75,7 @@ class AdminConfig(PluginConfigBase):
     
     admin_ids: List[str] = Field(
         default_factory=list,
-        description="管理员用户 ID 列表，用于校验 /restart 命令的调用者。为空时不校验，所有人均可使用；配置后仅列表内的管理员与本地控制台操作员可用。ID 为平台通用的用户 ID（user_id），跨平台匹配，忽略大小写与首尾空白",
+        description="管理员用户 ID 列表",
         json_schema_extra={
             "placeholder": "1234567890"
         }
