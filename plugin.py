@@ -147,7 +147,7 @@ class MaiBotAutoRestart(MaiBotPlugin):
         if admin_ids:
             self.ctx.logger.info(f"[lnrh1.maibot_auto_restart] 管理员校验已启用，已配置 {len(admin_ids)} 个管理员 ID")
         else:
-            self.ctx.logger.warning("[lnrh1.maibot_auto_restart] /restart命令 及 trigger_restart动作对所有成员可用；如需限制请在权限设置中填写 admin_ids")
+            self.ctx.logger.warning("[lnrh1.maibot_auto_restart] /restart命令 及 trigger_restart动作 对所有成员可用；如需限制请在权限设置中填写 admin_ids")
         
         self.ctx.logger.info(f"[lnrh1.maibot_auto_restart] 配置加载完成")
     
