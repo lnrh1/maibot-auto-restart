@@ -2,8 +2,8 @@
     "manifest_version": 2,
     "id": "lnrh1.maibot-auto-restart",
     "name": "MaiBot自动重启插件",
-    "version": "1.0.0",
-    "description": "提供阈值触发重启和定时重启功能",
+    "version": "1.1.0",
+    "description": "提供阈值触发重启、定时重启和手动重启功能。",
     "author": {
         "name": "lnrh1",
         "url": "https://github.com/lnrh1"

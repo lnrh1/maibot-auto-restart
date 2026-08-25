@@ -2,6 +2,7 @@ import asyncio
 import psutil
 import aiohttp
 from datetime import datetime
+from typing import List
 
 from maibot_sdk import MaiBotPlugin, Command, Action, CONFIG_RELOAD_SCOPE_SELF, Field, PluginConfigBase
 
@@ -12,7 +13,7 @@ class PluginSection(PluginConfigBase):
     __ui_order__ = 0
     
     config_version: str = Field(
-        default="1.0",
+        default="1.1",
         description="配置文件版本"
     )
 
@@ -67,10 +68,24 @@ class ScheduleConfig(PluginConfigBase):
     )
 
 
+class AdminConfig(PluginConfigBase):
+    
+    __ui_label__ = "权限设置"
+    __ui_order__ = 3
+    
+    admin_ids: List[str] = Field(
+        default_factory=list,
+        description="管理员用户 ID 列表，用于校验 /restart 命令的调用者。为空时不校验，所有人均可使用；配置后仅列表内的管理员与本地控制台操作员可用。ID 为平台通用的用户 ID（user_id），跨平台匹配，忽略大小写与首尾空白",
+        json_schema_extra={
+            "placeholder": "1234567890"
+        }
+    )
+
+
 class AdvancedConfig(PluginConfigBase):
     
     __ui_label__ = "高级设置"
-    __ui_order__ = 3
+    __ui_order__ = 4
     
     restart_delay_seconds: int = Field(
         default=5,
@@ -107,6 +122,7 @@ class MaiBotAutoRestartConfig(PluginConfigBase):
     plugin: PluginSection = Field(default_factory=PluginSection)
     threshold: ThresholdConfig = Field(default_factory=ThresholdConfig)
     schedule: ScheduleConfig = Field(default_factory=ScheduleConfig)
+    admin: AdminConfig = Field(default_factory=AdminConfig)
     advanced: AdvancedConfig = Field(default_factory=AdvancedConfig)
 
 
@@ -120,16 +136,19 @@ class MaiBotAutoRestart(MaiBotPlugin):
         self.monitor_running = False
         
     async def on_load(self) -> None:
-        """插件加载时执行"""
         self.ctx.logger.info("[lnrh1.maibot_auto_restart] 插件加载成功")
         
-        # 启动定时重启任务
         await self._setup_schedule_restart()
         
-        # 启动阈值监控
         if self.config.threshold.enable_threshold_monitor:
             await self._start_threshold_monitor()
             
+        admin_ids = self._get_admin_ids()
+        if admin_ids:
+            self.ctx.logger.info(f"[lnrh1.maibot_auto_restart] 管理员校验已启用，已配置 {len(admin_ids)} 个管理员 ID")
+        else:
+            self.ctx.logger.warning("[lnrh1.maibot_auto_restart] 未配置管理员 ID，/restart 对所有成员可用；如需限制请在权限设置中填写 admin_ids")
+        
         self.ctx.logger.info(f"[lnrh1.maibot_auto_restart] 配置加载完成")
     
     async def on_unload(self) -> None:
@@ -145,12 +164,10 @@ class MaiBotAutoRestart(MaiBotPlugin):
         self.ctx.logger.info("[lnrh1.maibot_auto_restart] 插件卸载完成")
     
     async def on_config_update(self, scope: str, config_data: dict, version: str) -> None:
-        """配置更新时执行"""
         if scope == CONFIG_RELOAD_SCOPE_SELF:
             self.ctx.logger.info(f"[lnrh1.maibot_auto_restart] 配置已更新：version={version}")
     
     async def _setup_schedule_restart(self) -> None:
-        """设置定时重启任务"""
         if not self.config.schedule.enable_schedule_restart:
             return
             
@@ -184,7 +201,6 @@ class MaiBotAutoRestart(MaiBotPlugin):
             self.ctx.logger.error(f"[lnrh1.maibot_auto_restart] 设置定时重启失败：{e}")
     
     async def _start_threshold_monitor(self) -> None:
-        """启动阈值监控"""
         self.monitor_running = True
         
         async def monitor_loop():
@@ -225,6 +241,23 @@ class MaiBotAutoRestart(MaiBotPlugin):
             )
         return token
     
+    def _get_admin_ids(self) -> List[str]:
+        return [str(item).strip().lower() for item in self.config.admin.admin_ids if str(item).strip()]
+    
+    def _is_privileged(self, user_id: str, is_local_operator: bool) -> bool:
+        admin_ids = self._get_admin_ids()
+        if not admin_ids:
+            return True
+        
+        if is_local_operator:
+            return True
+        
+        user_key = str(user_id or "").strip().lower()
+        if not user_key:
+            return False
+        
+        return any(entry == user_key for entry in admin_ids)
+    
     async def _trigger_restart(self, reason: str = "手动重启", stream_id: str = None) -> None:
 
         self.ctx.logger.info(f"[lnrh1.maibot_auto_restart] 触发重启，原因：{reason}")
@@ -238,14 +271,11 @@ class MaiBotAutoRestart(MaiBotPlugin):
             except Exception as e:
                 self.ctx.logger.warning(f"[lnrh1.maibot_auto_restart] 发送通知失败：{e}")
         
-        # 等待延迟
         await asyncio.sleep(delay)
         
-        # 调用 WebUI 重启 API
         self.ctx.logger.info(f"[lnrh1.maibot_auto_restart] 调用 WebUI 重启 API (端口：{port})")
         
         try:
-            # 读取 WebUI token
             token = await self._get_access_token()
             
             async with aiohttp.ClientSession() as session:
@@ -262,14 +292,23 @@ class MaiBotAutoRestart(MaiBotPlugin):
     
     @Command("restart", pattern=r"^/restart\s*$", description="手动触发重启")
     async def cmd_restart(self, **kwargs):
-        """手动重启命令"""
         stream_id = kwargs.get("stream_id")
+        platform = kwargs.get("platform", "")
+        user_id = kwargs.get("user_id", "")
+        is_local_operator = kwargs.get("is_local_operator") is True
+        
+        if not self._is_privileged(user_id, is_local_operator):
+            self.ctx.logger.warning(
+                f"[lnrh1.maibot_auto_restart] 拒绝未授权的重启请求: platform={platform} user_id={user_id}"
+            )
+            await self.ctx.send.text("你没有权限执行 /restart 命令，该操作仅限管理员使用", stream_id)
+            return False, "没有权限", 1
+        
         await self._trigger_restart("手动命令触发", stream_id)
-        return True, "重启指令已发送"
+        return True, "重启指令已发送", 1
     
     @Command("restart_status", pattern=r"^/restart_status\s*$", description="查看重启配置状态")
     async def cmd_restart_status(self, **kwargs):
-        """查看重启配置状态"""
         stream_id = kwargs.get("stream_id")
         memory_percent = psutil.virtual_memory().percent
         cpu_percent = psutil.cpu_percent(interval=1)
@@ -287,15 +326,13 @@ class MaiBotAutoRestart(MaiBotPlugin):
         )
         
         await self.ctx.send.text(status_msg, stream_id)
-        return True, "状态已发送"
+        return True, "状态已发送", 1
     
     @Action("trigger_restart", description="触发动作 - 手动触发重启")
-    async def action_restart(self,**kwargs):
-        """动作 - 触发重启"""
+    async def action_restart(self, **kwargs):
         await self._trigger_restart("动作触发")
         return True, "重启已触发"
 
 
 def create_plugin():
-    """创建插件实例"""
     return MaiBotAutoRestart()
