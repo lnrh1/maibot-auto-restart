@@ -330,6 +330,19 @@ class MaiBotAutoRestart(MaiBotPlugin):
     
     @Action("trigger_restart", description="触发动作 - 手动触发重启")
     async def action_restart(self, **kwargs):
+        platform = kwargs.get("platform", "")
+        user_id = kwargs.get("user_id", "")
+        is_local_operator = kwargs.get("is_local_operator") is True
+        action_data = kwargs.get("action_data")
+        if isinstance(action_data, dict) and "user_id" in action_data:
+            user_id = ""
+        
+        if not self._is_privileged(user_id, is_local_operator):
+            self.ctx.logger.warning(
+                f"[lnrh1.maibot_auto_restart] 拒绝未授权的重启动作: platform={platform} user_id={user_id}"
+            )
+            return False, "没有权限执行重启动作，该操作仅限管理员使用"
+        
         await self._trigger_restart("动作触发")
         return True, "重启已触发"
 
